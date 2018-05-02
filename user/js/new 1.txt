@@ -1,0 +1,123 @@
+function Left_Jeu(ID) {
+    M_ConfirmClew_Html=document.getElementById("M_ConfirmClew").innerHTML;
+	parent.frames['leftFrame'].location="L_Jeu_pk.aspx?ID=" + ID
+}
+
+//增、減下註類型
+function ADD_Jeu_S(t_this) {
+	var t_Str=Jeu_S;
+	
+	var t_Name=t_this.name;
+	t_Name="(" + t_Name.substr(5,(t_Name.length-5)) + ")"
+	Jeu_S=t_Str.replace(t_Name,"");
+		
+	if (t_this.value!="") {
+		if (eval(t_this.value)==0) {
+			t_this.value="";
+		} else {
+			Jeu_S+=t_Name;
+		}
+	}
+}
+
+//main確定下註驗證
+function confirm_jeu() {
+//art.dialog.alert(Jeu_S);
+	if(Jeu_S==""){
+		art.dialog.alert("請填寫下註金額!!!");
+		return false;
+	}
+	
+	var t_Jeu_S=Jeu_S;
+	t_Jeu_S=t_Jeu_S.substr(0,(t_Jeu_S.length-1));
+	t_Jeu_S=t_Jeu_S.replace(/\(/g,"");
+	t_Jeu_S=t_Jeu_S.replace(/\)/g,",");
+	var t_JeuM = new String(t_Jeu_S).split(",");
+
+	var l = testName.childNodes;
+	var lList = '<div class="ddmBox">'+
+	'<table class="art.dialog.alertTable Ball_List" width="410">'+
+	  '<tr>'+
+		'<td class="td_caption_1" width="30%">類型</td>'+
+		'<td class="td_caption_1" width="40%">明細</td>'+
+		'<td class="td_caption_1" width="30%">金額</td>'+
+	  '</tr>'+
+	'</table>'+
+	'<div class="ddBox">'+
+		'<table class="Ball_List" width="410">';
+
+	for(var i = 0; i < l.length; i++){
+		var node = l[i];
+		for(var j = 0; j < t_JeuM.length; j++){
+			if(node.tagName == "i_"+t_JeuM[j].split('_')[0]){
+				var aId = "";
+				aId = get_xml_text(node).split(',')[0];
+				lList = lList + 
+				'<tr>'+
+				'<td width="30%" class="Ball_tr_H">'+
+				aId +
+				'</td>'+
+				'<td width="40%" class="Ball_tr_H"><span class="Font_B">'+
+				'【'+ $("#jeu_p_"+t_JeuM[j]).attr("data-text") + '】</span> @<b class="Font_R">' + $("#tP_"+t_JeuM[j]).html() + '</b></td>'+
+				'<td width="30%" class="Ball_tr_H Font_R">'+
+				+ $("#jeuM_"+t_JeuM[j]).val() +
+				'</td>'+
+		  		'</tr>';
+			}
+		}
+	};	
+	
+	
+	//下註合計
+	var JeuXZ_Count=0,JeuXZ_Money=0;
+	var s_uPI_ID="",s_uPI_P="",s_uPI_M=""
+	
+    for(var i=0;i<t_JeuM.length;i++) {
+		var t_LimitationID=t_JeuM[i].substr(0,(t_JeuM[i].search("_")));
+
+		var t_jeuMoney = document.getElementById("jeuM_" + t_JeuM[i]);
+	
+		if (Number(t_jeuMoney.value)<Number(Limitation_Array[Number(t_LimitationID)][1])) {
+			art.dialog.alert("“下註金額”低於單註最低限額，請更改。\n\n\n" + document.getElementById("_Type_Name").innerHTML + "—" + Limitation_Array[Number(t_LimitationID)][0] + "\n\n單註最低限額：" + Limitation_Array[Number(t_LimitationID)][1] + "\n單註最高限額：" + Limitation_Array[Number(t_LimitationID)][2]);
+			t_jeuMoney.focus();
+			return false;
+		}
+		if (Number(t_jeuMoney.value)>Number(Limitation_Array[Number(t_LimitationID)][2])) {
+			art.dialog.alert("“下註金額”超過單註最高限額，請更改。\n\n\n" + document.getElementById("_Type_Name").innerHTML + "—" + Limitation_Array[Number(t_LimitationID)][0] + "\n\n單註最低限額：" + Limitation_Array[Number(t_LimitationID)][1] + "\n單註最高限額：" + Limitation_Array[Number(t_LimitationID)][2]);
+			t_jeuMoney.focus();
+			return false;
+		}
+		s_uPI_ID+="," + t_JeuM[i].substr(t_JeuM[i].search("_")+1);
+        s_uPI_P+="," + document.getElementById("tP_" + t_JeuM[i]).innerHTML;
+        s_uPI_M+="," + t_jeuMoney.value;
+		
+		JeuXZ_Count=JeuXZ_Count + 1;
+		JeuXZ_Money=JeuXZ_Money + Number(t_jeuMoney.value);
+	}
+
+	if (JeuXZ_Money > t_Money_KY){
+		art.dialog.alert("“總下註金額”超過您賬戶上的實際“可用余額”，請減少部分下註額後再下。")
+		return false;
+	}
+	
+
+
+	lList = lList+'</table></div><div class="tjBox">合計：<b class="Font_R">' + JeuXZ_Count + '</b>筆 共 ￥<b class="Font_R">' + JeuXZ_Money + '</b></div>';
+
+
+
+	art.dialog.confirm(lList, function () {
+	    document.M_JeuForm.uPI_ID.value=s_uPI_ID.substr(1);
+	    document.M_JeuForm.uPI_P.value=s_uPI_P.substr(1);
+	    document.M_JeuForm.uPI_M.value=s_uPI_M.substr(1);
+		Shortcut_jeuM = $("#Shortcut_jeuM").val();
+		Shortcut_Switch = $("#Shortcut_Switch").prop("checked");
+		M_ConfirmClew_Html=document.getElementById("M_ConfirmClew").innerHTML;
+		document.getElementById("M_ConfirmClew").innerHTML="下註中，請稍後……";
+		// return false;
+		$("#M_JeuForm").submit();
+	}, function () {
+
+	});	
+	//return false;
+}	
