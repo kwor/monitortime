@@ -1770,9 +1770,9 @@ function getWin ($user, $p=false)
 	$db = new DB();
 	$count = 0;
 	if ($p==false ) {
-		$sql = "SELECT `g_id`, `g_s_nid`, `g_mumber_type`, `g_nid`, `g_date`, `g_type`, `g_qishu`, `g_mingxi_1`, `g_mingxi_1_str`, `g_mingxi_2`, `g_mingxi_2_str`, `g_odds`, `g_jiner`, `g_tueishui`, `g_tueishui_1`, `g_tueishui_2`, `g_tueishui_3`, `g_tueishui_4`, `g_distribution`, `g_distribution_1`, `g_distribution_2`, `g_distribution_3`, `g_win`, `g_t_id` FROM `g_zhudan` WHERE {$date} AND yincang < 1 AND `g_nid` = '{$user[0]['g_name']}' AND `g_win` is not null ";
+		$sql = "SELECT `g_win_jb`,`g_tuisuix`,`g_id`, `g_s_nid`, `g_mumber_type`, `g_nid`, `g_date`, `g_type`, `g_qishu`, `g_mingxi_1`, `g_mingxi_1_str`, `g_mingxi_2`, `g_mingxi_2_str`, `g_odds`, `g_jiner`, `g_tueishui`, `g_tueishui_1`, `g_tueishui_2`, `g_tueishui_3`, `g_tueishui_4`, `g_distribution`, `g_distribution_1`, `g_distribution_2`, `g_distribution_3`, `g_win`, `g_t_id` FROM `g_zhudan` WHERE {$date} AND yincang < 1 AND `g_nid` = '{$user[0]['g_name']}' AND `g_win` is not null ";
 	} else {
-		$sql = "SELECT `g_id`, `g_s_nid`, `g_mumber_type`, `g_nid`, `g_date`, `g_type`, `g_qishu`, `g_mingxi_1`, `g_mingxi_1_str`, `g_mingxi_2`, `g_mingxi_2_str`, `g_odds`, `g_jiner`, `g_tueishui`, `g_tueishui_1`, `g_tueishui_2`, `g_tueishui_3`, `g_tueishui_4`, `g_distribution`, `g_distribution_1`, `g_distribution_2`, `g_distribution_3`, `g_win`, `g_t_id` FROM `g_zhudan` WHERE {$date} AND yincang < 1 AND `g_s_nid` LIKE '{$user[0]['g_nid']}%' AND `g_win` is not null ";
+		$sql = "SELECT `g_win_jb`,`g_tuisuix`,`g_id`, `g_s_nid`, `g_mumber_type`, `g_nid`, `g_date`, `g_type`, `g_qishu`, `g_mingxi_1`, `g_mingxi_1_str`, `g_mingxi_2`, `g_mingxi_2_str`, `g_odds`, `g_jiner`, `g_tueishui`, `g_tueishui_1`, `g_tueishui_2`, `g_tueishui_3`, `g_tueishui_4`, `g_distribution`, `g_distribution_1`, `g_distribution_2`, `g_distribution_3`, `g_win`, `g_t_id` FROM `g_zhudan` WHERE {$date} AND yincang < 1 AND `g_s_nid` LIKE '{$user[0]['g_nid']}%' AND `g_win` is not null ";
 	}
 
 	$result = $db->query($sql, 1);
@@ -1845,7 +1845,13 @@ function sumTuiSui ($result, $p=null)
 			$a = ($result['g_tueishui_1']) /100;
 			break;
 		case 9 : //會員退
-			$a = ($result['g_tueishui']) /100; 
+			if($result['g_tuisuix']>0){
+				$a = ($result['g_tuisuix']) /100; 
+			}else{
+				$a = ($result['g_tueishui']) /100; 
+			}
+			
+			
 			break;
 		default: $a=($result['g_tueishui']) /100; 
 	}
@@ -1858,10 +1864,20 @@ function sumCountMoney ($user, $results, $LM=FALSE)
 	if ($results)
 	{
 		$countMoney['Num'] = 1;
-		$sWin = $results['g_win'];
+		
+		if($results['g_win_jb']>0){
+			$sWin = $results['g_win_jb'];
+		}else{
+			$sWin = $results['g_win'];
+		}
+		
+		
+		
 		$sMoney = $results['g_jiner'];
 		$sOdds = $results['g_odds'];
+		
 		$tueishui = sumTuiSui ($results);
+		
 		if ($results['g_mingxi_1_str'] == null )
 		{
 			$countMoney['Money'] = $sMoney;
