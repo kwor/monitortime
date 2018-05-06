@@ -2,12 +2,10 @@
 /* 
   Copyright (c) 2010-02 Game
   Game All Rights Reserved. 
-  
+  Author QQ: 847163
   Author: Version:1.0
   Date:2011-12-07 09:28:32
 */
-
-
 if (!defined('ROOT_PATH'))
 exit('invalid request');
 //include_once ROOT_PATH.'Admin/config/AdminConfig.php';

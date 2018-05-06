@@ -17,7 +17,7 @@ class SumAmountcq
 	private $where;
 	private $db;
 	private $sum;
-	
+	private $jb;
 	function __construct($number, $bool=FALSE, $param=NULL, $sum= true)
 	{
 		$this->Number = $number;
@@ -25,6 +25,7 @@ class SumAmountcq
 		$this->sum = $sum;
 		$this->where = $bool == TRUE ? 'AND g_win is not null' : 'AND g_win is null';
 		$this->db = new DB();
+		$this->jb=new GetJbAnBi();
 	}
 	
 	public function ResultAmount ()
@@ -36,6 +37,8 @@ class SumAmountcq
 	{
 		$result = $this->Formula();
 		$money = 0;
+		$jbs=0;
+		$bis=0;
 		for ($i=0; $i<count($result); $i++)
 		{
 			$tuiShui = sumTuiSui ($result[$i]);
@@ -49,6 +52,10 @@ class SumAmountcq
 				$_tuiShui =	$result[$i]['g_jiner'] * $tuiShui;
 				$money = $result[$i]['g_jiner'] * $result[$i]['g_odds'] + $_tuiShui;
 				$result[$i]['g_win'] = $money - $result[$i]['g_jiner'];
+				
+				$jbs=$this->jb->GetJb($result[$i]['g_win'],$result[$i]['g_jiner'] ,$result[$i]['g_nid']);
+				$bis=$this->jb->GetBi($_tuiShui,$result[$i]['g_nid']);
+				$am=$jbs-$bis;
 			}
 			else 
 			{
@@ -66,7 +73,14 @@ class SumAmountcq
 			if ($this->sum == true)
 			{
 				$g_money_yes = $this->db->query("SELECT `g_money_yes` FROM `g_user` WHERE `g_name` = '{$result[$i]['g_nid']}' ", 1);
-				$smoney = $g_money_yes[0]['g_money_yes'] + $money;
+				if($am>0){
+					$smoney = $g_money_yes[0]['g_money_yes'] + $am;
+					
+				}else{
+					$smoney = $g_money_yes[0]['g_money_yes'] + $money;
+					
+				}
+				//$smoney = $g_money_yes[0]['g_money_yes'] + $money;
 				//加入判断 如果注单为隐藏则不加钱给会员
 				if($result[$i]['yincang']!=1)
 				{
@@ -83,8 +97,14 @@ class SumAmountcq
 			}else{
 			$getgwin=$result[$i]['g_win'];
 			}
-			$this->db->query("UPDATE `g_zhudan` SET `g_win` = '{$getgwin}' {$mx} WHERE `g_id` = {$result[$i]['g_id']} LIMIT 1 ", 2);
-		
+			
+			
+			$this->db->query("UPDATE `g_zhudan` SET `g_win_jb` = '{$jbs}',`g_tuisuix` = '{$bis}',`g_win` = '{$getgwin}' {$mx} WHERE `g_id` = {$result[$i]['g_id']} LIMIT 1 ", 2);
+			
+			//$this->db->query("UPDATE `g_zhudan` SET `g_win` = '{$getgwin}' {$mx} WHERE `g_id` = {$result[$i]['g_id']} LIMIT 1 ", 2);
+			$jbs=0;
+			$bis=0;
+			$am=0;
 		}
 		return $result;
 	}

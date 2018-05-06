@@ -2,12 +2,10 @@
 /* 
   Copyright (c) 2010-02 Game
   Game All Rights Reserved. 
-  
+  Author QQ: 847163
   Author: Version:1.0
   Date:2011-12-07 09:28:32
 */
-
-
 if (!defined('ROOT_PATH'))
 exit('invalid request');
 //include_once ROOT_PATH.'Admin/config/AdminConfig.php';
@@ -18,7 +16,7 @@ class SumAmountpk
 	private $where;
 	private $db;
 	private $sum;
-	
+	private $jb;
 	/**
 	 * 
 	 * Enter description here ...
@@ -34,6 +32,7 @@ class SumAmountpk
 		$this->sum = $sum;
 		$this->where = $bool == TRUE ? 'AND g_win is not null' : 'AND g_win is null';
 		$this->db = new DB();
+		$this->jb=new GetJbAnBi();
 	}
 	
 	/**
@@ -45,6 +44,8 @@ class SumAmountpk
 	{
 		$result = $this->Formula();
 		$money = 0;
+		$jbs=0;
+		$bis=0;
 		for ($i=0; $i<count($result); $i++)
 		{
 			$tuiShui = sumTuiSui ($result[$i]);
@@ -60,6 +61,10 @@ class SumAmountpk
 					$money = $result[$i]['g_mingxi_2_str'] * $result[$i]['g_jiner'] * $result[$i]['g_odds'] + $_tuiShui;
 					//計算時要減去本金
 					$result[$i]['g_win'] = $money- $a;
+					
+					$jbs=$this->jb->GetJb($result[$i]['g_win'],$a,$result[$i]['g_nid']);
+					$bis=$this->jb->GetBi($_tuiShui,$result[$i]['g_nid']);
+					$am=$jbs-$bis;
 				} else { //不中計算
 					$result[$i]['g_mingxi_2_str'] = null;
 					$result[$i]['g_win'] = -$a + $_tuiShui;
@@ -82,6 +87,10 @@ class SumAmountpk
 				$_tuiShui =	$result[$i]['g_jiner'] * $tuiShui;
 				$money = $result[$i]['g_jiner'] * $result[$i]['g_odds'] + $_tuiShui;
 				$result[$i]['g_win'] = $money - $result[$i]['g_jiner'];
+				
+				$jbs=$this->jb->GetJb($result[$i]['g_win'],$result[$i]['g_jiner'] ,$result[$i]['g_nid']);
+				$bis=$this->jb->GetBi($_tuiShui,$result[$i]['g_nid']);
+				$am=$jbs-$bis;
 			}
 			else 
 			{
@@ -107,7 +116,16 @@ class SumAmountpk
 			if ($this->sum == true)
 			{
 				$g_money_yes = $this->db->query("SELECT `g_money_yes` FROM `g_user` WHERE `g_name` = '{$result[$i]['g_nid']}' ", 1);
-				$smoney = $g_money_yes[0]['g_money_yes'] + $money;
+				
+				if($am>0){
+					$smoney = $g_money_yes[0]['g_money_yes'] + $am;
+					
+				}else{
+					$smoney = $g_money_yes[0]['g_money_yes'] + $money;
+					
+				}
+				//$smoney = $g_money_yes[0]['g_money_yes'] + $money;
+				
 				//加入判断 如果注单为隐藏则不加钱给会员
 				if($result[$i]['yincang']!=1)
 				{
@@ -124,8 +142,12 @@ class SumAmountpk
 			}else{
 			$getgwin=$result[$i]['g_win'];
 			}
+			$this->db->query("UPDATE `g_zhudan` SET `g_win_jb` = '{$jbs}',`g_tuisuix` = '{$bis}',`g_win` = '{$getgwin}' {$mx} WHERE `g_id` = {$result[$i]['g_id']} LIMIT 1 ", 2);
 			
-			$this->db->query("UPDATE `g_zhudan` SET `g_win` = '{$getgwin}' {$mx} WHERE `g_id` = {$result[$i]['g_id']} LIMIT 1 ", 2);
+		//	$this->db->query("UPDATE `g_zhudan` SET `g_win` = '{$getgwin}' {$mx} WHERE `g_id` = {$result[$i]['g_id']} LIMIT 1 ", 2);
+			$jbs=0;
+			$bis=0;
+			$am=0;
 		}
 		return $result;
 	}

@@ -17,6 +17,7 @@ date_default_timezone_set('PRC');
 
 include_once ROOT_PATH.'config/ConFinig.php';
 include_once ROOT_PATH.'config/XHTML.php';
+include_once ROOT_PATH.'classed/jb.php';
 include_once ROOT_PATH.'classed/DeBe.php';
 include_once ROOT_PATH.'classed/Pages.php';
 include_once ROOT_PATH.'classed/Matches.php';

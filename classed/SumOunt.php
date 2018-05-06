@@ -2,12 +2,10 @@
 /* 
   Copyright (c) 2010-02 Game
   Game All Rights Reserved. 
-  
+  Author QQ: 847163
   Author: Version:1.0
   Date:2011-12-07 09:28:32
 */
-
-
 if (!defined('ROOT_PATH'))
 exit('invalid request');
 //include_once ROOT_PATH.'Admin/config/AdminConfig.php';
@@ -18,6 +16,8 @@ class SumAmount
 	private $where;
 	private $db;
 	private $sum;
+	
+	private $jb;
 	
 	/**
 	 * 
@@ -34,6 +34,7 @@ class SumAmount
 		$this->sum = $sum;
 		$this->where = $bool == TRUE ? 'AND g_win is not null' : 'AND g_win is null';
 		$this->db = new DB();
+		$this->jb=new GetJbAnBi();
 	}
 	
 	/**
@@ -45,8 +46,8 @@ class SumAmount
 	{
 		$result = $this->Formula();
 		$money = 0;
-		$g_jb = $this->db->query("SELECT `g_money_yes`,`g_bi`,`g_jb` FROM `g_user` WHERE `g_name` = '{$result[$i]['g_nid']}' ", 1);
-		
+		$jbs=0;
+		$bis=0;
 		for ($i=0; $i<count($result); $i++)
 		{
 			$tuiShui = sumTuiSui ($result[$i]);
@@ -56,32 +57,21 @@ class SumAmount
 				 * 中的注數 + 本金 * 賠率 + 退水
 				 */
 				$a = $result[$i]['g_mingxi_1_str'] * $result[$i]['g_jiner'];
-				
-				
-				$_tuiShuix =	$a * $tuiShui*(1-$g_jb[0]['g_bi']);
-				
 				$_tuiShui =	$a * $tuiShui;
-				
 				if ($result[$i]['g_mingxi_2_str']){
-					
-					
-				$moneyx = $result[$i]['g_mingxi_2_str'] * $result[$i]['g_jiner'] * ($result[$i]['g_odds']-$g_jb[0]['g_jb']) + $_tuiShuix;
-						
-					
 					//寫入MONEY是不用在-本金
 					$money = $result[$i]['g_mingxi_2_str'] * $result[$i]['g_jiner'] * $result[$i]['g_odds'] + $_tuiShui;
 					//計算時要減去本金
 					$result[$i]['g_win'] = $money- $a;
 					
-					$g_bix = $moneyx- $a;
+					$jbs=$this->jb->GetJb($result[$i]['g_win'],$a,$result[$i]['g_nid']);
+					$bis=$this->jb->GetBi($_tuiShui,$result[$i]['g_nid']);
+					
+					$am=$jbs-$bis;
 				} else { //不中計算
 					$result[$i]['g_mingxi_2_str'] = null;
 					$result[$i]['g_win'] = -$a + $_tuiShui;
 					$money = $_tuiShui;
-					
-					$moneyx = $_tuiShuix;
-						
-					
 				}
 			}
 			else if ($result[$i]['g_result'] == '和')
@@ -97,37 +87,25 @@ class SumAmount
 				/*處理贏結算
 				 * 本金 * 賠率 + 退水
 				 */
-				
-				
-			
-					$_tuiShuix =	$result[$i]['g_jiner'] * $tuiShui*(1-$g_jb[0]['g_bi']);
-					$moneyx = $result[$i]['g_jiner'] * ($result[$i]['g_odds']-$g_jb[0]['g_jb']) + $_tuiShuix;
-				
 				$_tuiShui =	$result[$i]['g_jiner'] * $tuiShui;
-				
-				
-				
 				$money = $result[$i]['g_jiner'] * $result[$i]['g_odds'] + $_tuiShui;
 				$result[$i]['g_win'] = $money - $result[$i]['g_jiner'];
-				$g_bix = $moneyx - $result[$i]['g_jiner'];
+				
+				
+				$jbs=$this->jb->GetJb($result[$i]['g_win'],$result[$i]['g_jiner'] ,$result[$i]['g_nid']);
+				$bis=$this->jb->GetBi($_tuiShui,$result[$i]['g_nid']);
+				
+				$am=$jbs-$bis;
+				
 			}
 			else 
 			{
 				/*處理輸結算
 				 * 返回退水
 				 */
-				if($g_jb[0]['g_bi']>0){
-					$_tuiShuix =	$result[$i]['g_jiner'] * $tuiShui*(1-$g_jb[0]['g_bi']);
-				}
 				$_tuiShui =	$result[$i]['g_jiner'] * $tuiShui;
 				$d = -$result[$i]['g_jiner'];
-				
-				
 				$result[$i]['g_win'] = $d  + $_tuiShui;
-				
-					
-				$moneyx = $_tuiShuix;
-				
 				$money = $_tuiShui;
 			}
 			/*結算完成、將金額寫入帳號
@@ -143,9 +121,14 @@ class SumAmount
 			}
 			if ($this->sum == true)
 			{
-				$g_money_yes = $this->db->query("SELECT `g_money_yes`,`g_bi`,`g_jb` FROM `g_user` WHERE `g_name` = '{$result[$i]['g_nid']}' ", 1);
-				//
-				$smoney = $g_money_yes[0]['g_money_yes'] + $moneyx;
+				$g_money_yes = $this->db->query("SELECT `g_money_yes` FROM `g_user` WHERE `g_name` = '{$result[$i]['g_nid']}' ", 1);
+				if($am>0){
+					$smoney = $g_money_yes[0]['g_money_yes'] + $am;
+					
+				}else{
+					$smoney = $g_money_yes[0]['g_money_yes'] + $money;
+					
+				}
 				
 				 //加入判断 如果注单为隐藏则不加钱给会员
 				if($result[$i]['yincang']!=1)
@@ -160,12 +143,13 @@ class SumAmount
 	
 			if ($result[$i]['g_win']>$getuser['g_win_d']){
 			$getgwin=$result[$i]['g_win']-$getuser['g_win_k'];
-			$getgwinx=$g_bix -$getuser['g_win_k'];
 			}else{
 			$getgwin=$result[$i]['g_win'];
-			$getgwinx=$g_bix;
 			}
-			$this->db->query("UPDATE `g_zhudan` SET `g_win_bi` = '{$getgwinx}',`g_tuisuix` = '{$_tuiShuix}',`g_win` = '{$getgwin}' {$mx} WHERE `g_id` = {$result[$i]['g_id']} LIMIT 1 ", 2);
+			$this->db->query("UPDATE `g_zhudan` SET `g_win_jb` = '{$jbs}',`g_tuisuix` = '{$bis}',`g_win` = '{$getgwin}' {$mx} WHERE `g_id` = {$result[$i]['g_id']} LIMIT 1 ", 2);
+			$jbs=0;
+			$bis=0;
+			$am=0;
 		}
 		return $result;
 	}

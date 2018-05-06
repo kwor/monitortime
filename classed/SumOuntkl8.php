@@ -2,7 +2,7 @@
 /* 
   Copyright (c) 2010-02 Game
   Game All Rights Reserved. 
-  
+  Author QQ: 847163
   Author: Version:1.0
   Date:2012-2-24 09:28:32
 */
