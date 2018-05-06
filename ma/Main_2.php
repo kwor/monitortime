@@ -38,6 +38,34 @@ $result2 = $db->query($sql2, 1);
     function Zd_Show_All(FindDate) {
         window.location.href = "Report_JeuWeekAllList.php?FindDate=" + FindDate + "&page=0&r=07180358274202";
     }
+    $(function(){ 
+
+    	$(".jb").each(function() {
+    	    $(this).bind("change", function() {
+
+    	    	var val=$(this).val();
+    	    	var u=$(this).data("u");
+    	    	$.post("up.php",{jb:val,uid:u},function(result){
+    	    		console.info(result);
+    	    	  });
+
+    	    });
+    	});
+
+
+    	$(".bi").each(function() {
+    	    $(this).bind("change", function() {
+
+    	    	var val=$(this).val();
+    	    	var u=$(this).data("u");
+    	    	
+    	    	$.post("up.php",{bi:val,uid:u},function(result){
+    	    		console.info(result);
+    	    	  });
+    	    });
+    	});
+    	
+  });
 </script>
 	<div data-role="header" data-position="fixed">
 		<a href="#defaultpanel" data-role="botton" data-icon="bars" data-iconpos="notext"></a>
@@ -63,7 +91,12 @@ $result2 = $db->query($sql2, 1);
           	<th><a href="Main_2.php?cid=<?=$value["g_uid"]?>"><?=$value["g_name"]?></a></th>
 			<th><?=$value["g_f_name"]?></th>
             <th><?=$value["g_money_yes"]?></th>
-          <th> <select>
+          <th> <select name="jb" class="jb" data-u="<?=$value["g_uid"]?>">
+   <?php if($value["g_jb"]>0){
+   	?>
+   	<option value ="<?=$value["g_jb"]?>"><?=$value["g_jb"]?></option>
+   <?php
+   }?>
   <option value ="0">关</option>
   <option value ="0.01">0.01</option>
   <option value="0.02">0.02</option>
@@ -72,15 +105,21 @@ $result2 = $db->query($sql2, 1);
   <option value="0.05">0.05</option>
 </select>
 </th>
-		</tr>
-		<th> <select>
+	
+  <th> <select name="bi"  class="bi" data-u="<?=$value["g_uid"]?>">
+   <?php if($value["g_bi"]>0){
+   	?>
+   	<option value ="<?=$value["g_bi"]?>"><?=$value["g_bi"]?></option>
+   <?php
+   }?>
+   
   <option value ="0">关</option>
   <option value ="0.1">0.1</option>
   <option value="0.2">0.2</option>
   <option value="0.3">0.3</option>
 </select>
 </th>
-		</tr>
+	
    
    <?php 
    }
